@@ -146,7 +146,9 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dcommon.h" />
+    <ClInclude Include="Basetype.h" />
+    <ClInclude Include="dcommon.h" />
+    <ClInclude Include="getypes.h" />
     <ClInclude Include="glcorearb.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="PCache.h" />

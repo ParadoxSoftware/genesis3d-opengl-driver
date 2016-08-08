@@ -7,9 +7,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dcommon.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="glext.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -35,6 +32,15 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="PCache.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dcommon.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Basetype.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="getypes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -19,6 +19,8 @@
 #include <Windows.h>
 #include <list>
 #include "./glew/include/GL/glew.h"
+#include "Basetype.h"
+#include "getypes.h"
 #include "PCache.h"
 #include "THandle.h"
 #include "Render.h"
