@@ -31,6 +31,8 @@
 extern unsigned int COLOR_DEPTH;	// Bits per pixel to use for OpenGL Window/Context
 extern unsigned int ZBUFFER_DEPTH;		// Depth of the ZBuffer to use in OpenGL.   
 extern bool bUseFullSceneAntiAliasing;
+extern bool bUseAnisotropicFiltering;
+extern GLfloat fMaxAnisotropy;
 
 #define USE_LIGHTMAPS					// Render lightmaps
 #define USE_LINEAR_INTERPOLATION		// Comment out to use nearest neighbor interpolation

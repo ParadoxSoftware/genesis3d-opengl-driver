@@ -136,6 +136,7 @@ geRDriver_THandle *DRIVERCC THandle_Create(int32 Width, int32 Height, int32 NumM
 	if (!THandle)
 	{
 		SetLastDrvError(DRV_ERROR_GENERIC, "OGL_THandleCreate: No more handles left.");
+		gllog("ERROR:  OGL_THandleCreate: No more handles left.\n");
 		goto ExitWithError;
 	}
 
@@ -147,6 +148,7 @@ geRDriver_THandle *DRIVERCC THandle_Create(int32 Width, int32 Height, int32 NumM
 		{
 			sprintf(errMsg, "OGL_THandleCreate: Width > GL_MAX_TEXTURE_SIZE (%d)", maxTextureSize);
 			SetLastDrvError(DRV_ERROR_GENERIC, errMsg);
+			gllog("%s\n", errMsg);
 			goto ExitWithError;
 		}
 
@@ -154,6 +156,7 @@ geRDriver_THandle *DRIVERCC THandle_Create(int32 Width, int32 Height, int32 NumM
 		{
 			sprintf(errMsg, "OGL_THandleCreate: Height > GL_MAX_TEXTURE_SIZE (%d)", maxTextureSize);
 			SetLastDrvError(DRV_ERROR_GENERIC, errMsg);
+			gllog("%s\n", errMsg);
 			goto ExitWithError;
 		}
 	}
@@ -313,8 +316,8 @@ void THandle_Update(geRDriver_THandle *THandle)
 			{
 				GLubyte *dest;
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -352,8 +355,8 @@ void THandle_Update(geRDriver_THandle *THandle)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
  #else 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
  #endif
 #else
  #ifdef TRILINEAR_INTERPOLATION
@@ -385,6 +388,12 @@ void THandle_Update(geRDriver_THandle *THandle)
 			gluBuild2DMipmaps(GL_TEXTURE_2D, 3, THandle->Width, THandle->Height, 
 				GL_RGB, GL_UNSIGNED_BYTE, THandle->Data[0]);
 		}
+
+		if (bUseAnisotropicFiltering)
+		{
+			glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, fMaxAnisotropy);
+		}
+
 	}
 
 	THandle->Flags &= ~THANDLE_UPDATE;

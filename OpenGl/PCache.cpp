@@ -351,8 +351,12 @@ BOOL PCache_FlushMiscPolys()
 		else
 			glEnable(GL_DEPTH_WRITEMASK);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		if (bUseAnisotropicFiltering)
+		{
+			glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, fMaxAnisotropy);
+		}
 
 		if (pPoly->flags & DRV_RENDER_CLAMP_UV)
 		{
@@ -586,6 +590,11 @@ BOOL PCache_FlushWorldPolys(void)
 
 			if (pPoly->THandle->Flags & THANDLE_UPDATE)
 				THandle_Update(pPoly->THandle);
+			
+			if (bUseAnisotropicFiltering)
+			{
+				glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, fMaxAnisotropy);
+			}
 
 			if (pPoly->LInfo)
 			{
@@ -613,6 +622,11 @@ BOOL PCache_FlushWorldPolys(void)
 
 				if (pPoly->LInfo->THandle->Flags & THANDLE_UPDATE)
 					THandle_Update(pPoly->LInfo->THandle);
+				
+				if (bUseAnisotropicFiltering)
+				{
+					glTexParameterf(GL_TEXTURE_2D, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, fMaxAnisotropy);
+				}
 
 				glActiveTexture(GL_TEXTURE0);
 				glClientActiveTexture(GL_TEXTURE0);

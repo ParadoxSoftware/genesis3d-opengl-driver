@@ -50,6 +50,8 @@ GLboolean multitexture = GE_FALSE;
 unsigned int COLOR_DEPTH;	// Bits per pixel to use for OpenGL Window/Context
 unsigned int ZBUFFER_DEPTH;		// Depth of the ZBuffer to use in OpenGL.   
 bool bUseFullSceneAntiAliasing = false;
+bool bUseAnisotropicFiltering = false;
+GLfloat fMaxAnisotropy = 8.0f;
 
 FILE *plog = NULL;
 
@@ -260,6 +262,13 @@ geBoolean DRIVERCC DrvInit(DRV_DriverHook *Hook)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	} 
+
+	// Replace Bi-Linear filtering with Anisotropic filtering
+	if (glewIsExtensionSupported("GL_EXT_texture_filter_anisotropic"))
+	{
+		gllog("Replacing Bilinear filtering with Anisotropic filtering...\n");
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fMaxAnisotropy);
+	}
 
 	SetFogEnable(GE_FALSE, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
