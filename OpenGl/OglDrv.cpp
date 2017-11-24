@@ -20,8 +20,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
-#include <gl/gl.h>
-
+//#include <gl/gl.h>
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 #include "OglDrv.h"
 #include "OglMisc.h"
 #include "THandle.h"
@@ -43,12 +44,29 @@ GLfloat ClearColor[3];
 
 // Toggle and function pointers for OpenGL multitexture extention
 GLboolean multitexture = GE_FALSE;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-PFNGLMULTITEXCOORD4FARBPROC glMultiTexCoord4fARB;
+//PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
+//PFNGLMULTITEXCOORD4FARBPROC glMultiTexCoord4fARB;
 
 unsigned int COLOR_DEPTH;	// Bits per pixel to use for OpenGL Window/Context
 unsigned int ZBUFFER_DEPTH;		// Depth of the ZBuffer to use in OpenGL.   
+bool bUseFullSceneAntiAliasing = false;
 
+FILE *plog = NULL;
+
+void gllog(const char *fmt, ...)
+{
+	va_list list;
+	char buffer[8192];
+
+	va_start(list, fmt);
+	vsprintf(buffer, fmt, list);
+	va_end(list);
+
+	plog = fopen("opengl.log", "at");
+	fprintf(plog, "%s\n", buffer);
+	fclose(plog);
+	plog = NULL;
+}
 
 DRV_Driver OGLDRV = 
 {
@@ -180,30 +198,18 @@ geBoolean DRIVERCC SetClearColor(float r, float g, float b)
 geBoolean DRIVERCC DrvInit(DRV_DriverHook *Hook)
 {
 	RECT		WRect;
-	FILE *stream;
+//	FILE *stream;
 
 	COLOR_DEPTH = 16;
 	ZBUFFER_DEPTH = 16;
 
 	ClearColor[0] = ClearColor[1] = ClearColor[2] = 0.f;
 
-	stream = fopen("D3D24.ini","r");
-	if(stream)
-	{
-		fscanf(stream,"%d",&COLOR_DEPTH);
-		fscanf(stream,"%d",&ZBUFFER_DEPTH);
-		fclose(stream);
-
-		{
-			char lpRetStr[25];
-			DWORD dwRetCount;
-			dwRetCount = GetPrivateProfileString("D3D24", "BPP","16", (LPTSTR) &lpRetStr,sizeof(lpRetStr), ".\\D3D24.INI");
-			if ( dwRetCount ) COLOR_DEPTH = atoi(lpRetStr);
-			dwRetCount = GetPrivateProfileString("D3D24", "ZBufferD","16", (LPTSTR) &lpRetStr,sizeof(lpRetStr), ".\\D3D24.INI");
-			if ( dwRetCount ) ZBUFFER_DEPTH = atoi(lpRetStr);
-		}
-	}
-
+	COLOR_DEPTH = GetPrivateProfileInt("D3D24", "BPP",16, ".\\D3D24.INI");
+	ZBUFFER_DEPTH = GetPrivateProfileInt("D3D24", "ZBufferD", 16, ".\\D3D24.INI");
+	bUseFullSceneAntiAliasing = (GetPrivateProfileInt("D3D24", "FSAntiAliasing", 0, ".\\D3D24.INI") == 1);
+	if (bUseFullSceneAntiAliasing) gllog("Requesting Full Scene AntiAliasing...");
+	
 	WindowSetup(Hook);
 	
 	if(Hook->Width == -1 && Hook->Height == -1)
@@ -218,28 +224,19 @@ geBoolean DRIVERCC DrvInit(DRV_DriverHook *Hook)
 		return GE_FALSE;
 	} 
 
+	
 	SetGLPixelFormat(Hook);
-
+	
 	ClientWindow.Width = Hook->Width;
 	ClientWindow.Height = Hook->Height;
 	ClientWindow.hWnd = Hook->hWnd;
 	
 #ifdef USE_LIGHTMAPS
-	if(ExtensionExists("GL_ARB_multitexture"))
-	{
-		glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
-		glMultiTexCoord4fARB = (PFNGLMULTITEXCOORD4FARBPROC)wglGetProcAddress("glMultiTexCoord4fARB");
-
-		if(glActiveTextureARB != NULL && glMultiTexCoord4fARB != NULL)
-		{
-			multitexture = GL_TRUE;
-		}
-	}
+	if (glewIsExtensionSupported("GL_ARB_multitexture"))
+		multitexture = GL_TRUE;
 	else 
 #endif
-	{
 		multitexture = GL_FALSE;
-	} 
 
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -281,7 +278,7 @@ geBoolean DRIVERCC DrvInit(DRV_DriverHook *Hook)
 	RenderingIsOK = GE_TRUE;
 
 	PCache_Initialize();
-
+	gllog("Driver initialization complete...\n");
 	return GE_TRUE;
 }
 
@@ -463,7 +460,7 @@ geBoolean DRIVERCC ScreenShot(const char *Name)
 	tgaHeader[16] = 24;
  
 	// Convert the extention (if one exists) to .tga.  They probably expect a .bmp.
-	newName = strdup(Name);
+	newName = _strdup(Name);
 
 	nameLen = strlen(newName);
 

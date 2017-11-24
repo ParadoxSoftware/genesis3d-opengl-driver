@@ -21,8 +21,10 @@
 #define THANDLE_H
 
 #include <windows.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
+//#include <gl/gl.h>
+//#include <gl/glu.h>
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 
 #include "DCommon.h"
 #include "OglMisc.h"

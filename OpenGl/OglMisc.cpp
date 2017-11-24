@@ -18,7 +18,9 @@
 /****************************************************************************************/
 
 #include <windows.h>
-#include <gl/gl.h>
+//#include <gl/gl.h>
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 
 #include "DCommon.h"
 #include "OglMisc.h"

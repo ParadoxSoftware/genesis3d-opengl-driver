@@ -21,13 +21,16 @@
 #define OGLDRV_H
 
 #include "DCommon.h"
-#include "glext.h"
+//#include "glext.h"
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 
 // Here are some useful values you can change to meet your needs.
 // These should, in the future, really be handled at run-time as opposed to compile-time.
 // The defaults work well with TNT2 based cards.
 extern unsigned int COLOR_DEPTH;	// Bits per pixel to use for OpenGL Window/Context
 extern unsigned int ZBUFFER_DEPTH;		// Depth of the ZBuffer to use in OpenGL.   
+extern bool bUseFullSceneAntiAliasing;
 
 #define USE_LIGHTMAPS					// Render lightmaps
 #define USE_LINEAR_INTERPOLATION		// Comment out to use nearest neighbor interpolation
@@ -37,13 +40,15 @@ extern unsigned int ZBUFFER_DEPTH;		// Depth of the ZBuffer to use in OpenGL.
 extern		DRV_Driver	OGLDRV;
 extern		DRV_Window	ClientWindow;
 
-extern		PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-extern      PFNGLMULTITEXCOORD4FARBPROC glMultiTexCoord4fARB;
+//extern		PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
+//extern      PFNGLMULTITEXCOORD4FARBPROC glMultiTexCoord4fARB;
 extern		GLboolean multitexture;
 
 extern		GLint maxTextureSize;
 extern		geBoolean FogEnabled;
 extern		geBoolean RenderingIsOK;
+
+void gllog(const char *fmt, ...);
 
 geBoolean DRIVERCC SetFogEnable(geBoolean Enable, float r, float g, float b, float Start, float End);
 geBoolean DRIVERCC SetClearColor(float r, float g, float b);

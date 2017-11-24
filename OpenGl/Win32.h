@@ -20,7 +20,9 @@
 #ifndef WIN32_H
 #define WIN32_H
 
-#include <gl/gl.h>
+//#include <gl/gl.h>
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 
 #include "DCommon.h"
 
@@ -33,6 +35,7 @@ struct
 
 
 void WindowSetup(DRV_DriverHook *Hook);
+void SetFSAA(DRV_DriverHook *Hook);
 void SetGLPixelFormat(DRV_DriverHook *Hook);
 void WindowCleanup();
 void FlipGLBuffers();

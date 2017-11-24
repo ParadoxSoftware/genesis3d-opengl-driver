@@ -29,4 +29,7 @@ BOOL PCache_FlushDecals(void);
 BOOL PCache_InsertMiscPoly(DRV_TLVertex *Verts, int32 NumVerts, geRDriver_THandle *THandle, uint32 Flags);
 BOOL PCache_FlushMiscPolys(void);
 
+BOOL PCache_InsertWorldPoly(DRV_TLVertex *Verts, int32 NumVerts, geRDriver_THandle *THandle, DRV_TexInfo *TexInfo, DRV_LInfo *LInfo, uint32 Flags);
+BOOL PCache_FlushWorldPolys(void);
+
 #endif

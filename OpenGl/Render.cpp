@@ -18,8 +18,9 @@
 /****************************************************************************************/
 
 #include <windows.h>
-#include <gl/gl.h>
-
+//#include <gl/gl.h>
+#define GLEW_STATIC
+#include "./glew/include/GL/glew.h"
 #include "Render.h"
 #include "OglDrv.h"
 #include "OglMisc.h"
@@ -210,6 +211,7 @@ void Render_WorldPolyMultitexture(DRV_TLVertex *Pnts, int32 NumPoints, geRDriver
 geBoolean DRIVERCC Render_WorldPoly(DRV_TLVertex *Pnts, int32 NumPoints, geRDriver_THandle *THandle, 
 									DRV_TexInfo *TexInfo, DRV_LInfo *LInfo, uint32 Flags)
 {
+#ifndef USE_PCACHE
 	GLfloat	shiftU, shiftV, scaleU, scaleV;
 	DRV_TLVertex *pPnt = Pnts;
 	GLubyte alpha;
@@ -277,8 +279,10 @@ geBoolean DRIVERCC Render_WorldPoly(DRV_TLVertex *Pnts, int32 NumPoints, geRDriv
 	}
 
 	OGLDRV.NumRenderedPolys++; 
-
 	return GE_TRUE;
+#else
+	return PCache_InsertWorldPoly(Pnts, NumPoints, THandle, TexInfo, LInfo, Flags);
+#endif
 }
 
 
@@ -599,6 +603,111 @@ geBoolean DRIVERCC DrawDecal(geRDriver_THandle *THandle, RECT *SRect, int32 x, i
 	return GE_TRUE; 
 }
 
+geBoolean DRIVERCC DrawDecalNew(geRDriver_THandle *THandle, RECT *SRect, int32 x, int32 y)
+{
+	DRV_TLVertex Pnts[4];
+	RECT *srcRect, tmpRect;
+	int width, height;
+
+	if (!SRect)
+	{
+		tmpRect.left = 0;
+		tmpRect.right = THandle->Width;
+		tmpRect.top = 0;
+		tmpRect.bottom = THandle->Height;
+
+		srcRect = &tmpRect;
+		width = (THandle->Width);
+		height = (THandle->Height);
+	}
+	else
+	{
+		srcRect = SRect;
+		width = (srcRect->right - srcRect->left);
+		height = (srcRect->bottom - srcRect->top);
+	}
+
+	if (x + width <= 0 || y + height <= 0 || x >= ClientWindow.Width || y >= ClientWindow.Height)
+	{
+		return GE_TRUE;
+	}
+
+	if (x + width >= (ClientWindow.Width - 1))
+	{
+		srcRect->right -= ((x + width) - (ClientWindow.Width - 1));
+	}
+
+	if (y + height >= (ClientWindow.Height - 1))
+	{
+		srcRect->bottom -= ((y + height) - (ClientWindow.Height - 1));
+	}
+
+	if (x < 0)
+	{
+		srcRect->left += -x;
+		x = 0;
+	}
+
+	if (y < 0)
+	{
+		srcRect->top += -y;
+		y = 0;
+	}
+
+	if (boundTexture != THandle->TextureID)
+	{
+		glBindTexture(GL_TEXTURE_2D, THandle->TextureID);
+		boundTexture = THandle->TextureID;
+	}
+
+	if (THandle->Flags & THANDLE_UPDATE)
+	{
+		THandle_Update(THandle);
+	}
+
+	Pnts[0].x = x;
+	Pnts[0].y = y;
+	Pnts[0].z = 0.0f;
+	Pnts[0].u = 0.0f;
+	Pnts[0].v = 0.0f;
+	Pnts[0].r = 255.0f;
+	Pnts[0].g = 255.0f;
+	Pnts[0].b = 255.0f;
+	Pnts[0].a = 255.0f;
+
+	Pnts[1].x = x + width;
+	Pnts[1].y = y;
+	Pnts[1].z = 0.0f;
+	Pnts[1].u = (float)(width / THandle->PaddedWidth);
+	Pnts[1].v = 0.0f;
+	Pnts[1].r = 255.0f;
+	Pnts[1].g = 255.0f;
+	Pnts[1].b = 255.0f;
+	Pnts[1].a = 255.0f;
+
+	Pnts[2].x = x + width;
+	Pnts[2].y = y + height;
+	Pnts[2].z = 0.0f;
+	Pnts[2].u = (float)(width / THandle->PaddedWidth);
+	Pnts[2].v = (float)(height / THandle->PaddedHeight);
+	Pnts[2].r = 255.0f;
+	Pnts[2].g = 255.0f;
+	Pnts[2].b = 255.0f;
+	Pnts[2].a = 255.0f;
+
+	Pnts[3].x = x;
+	Pnts[3].y = y + height;
+	Pnts[3].z = 0.0f;
+	Pnts[3].u = 0.0f;
+	Pnts[3].v = (float)(height / THandle->PaddedHeight);
+	Pnts[3].r = 255.0f;
+	Pnts[3].g = 255.0f;
+	Pnts[3].b = 255.0f;
+	Pnts[3].a = 255.0f;
+
+	return PCache_InsertMiscPoly(Pnts, 4, THandle, DRV_RENDER_NO_ZMASK | DRV_RENDER_ALPHA);
+}
+
 // changed QD Shadows
 //geBoolean DRIVERCC BeginScene(geBoolean Clear, geBoolean ClearZ, RECT *WorldRect)
 geBoolean DRIVERCC BeginScene(geBoolean Clear, geBoolean ClearZ, geBoolean ClearStencil, RECT *WorldRect)
@@ -615,6 +724,8 @@ geBoolean DRIVERCC BeginScene(geBoolean Clear, geBoolean ClearZ, geBoolean Clear
 	}
 
 	OGLDRV.NumRenderedPolys = 0;
+	if (bUseFullSceneAntiAliasing)
+		glEnable(GL_MULTISAMPLE);
 
 	return GE_TRUE;
 }
@@ -623,10 +734,14 @@ geBoolean DRIVERCC BeginScene(geBoolean Clear, geBoolean ClearZ, geBoolean Clear
 geBoolean DRIVERCC EndScene(void)
 {	
 #ifdef USE_PCACHE
+	PCache_FlushWorldPolys();
 	PCache_FlushMiscPolys();
 #endif
 
 	PCache_FlushDecals();
+
+	if (bUseFullSceneAntiAliasing)
+		glDisable(GL_MULTISAMPLE);
 
 	if(RenderingIsOK)
 		FlipGLBuffers();
